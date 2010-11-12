@@ -19,7 +19,28 @@ module TMDBParty
     end
     
     def search(query)
+      puts method_url('Movie.search', query)
       data = self.class.get(method_url('Movie.search', query)).parsed_response
+      if data.class != Array || data.first == "Nothing found."
+        []
+      else
+        data.collect { |movie| Movie.new(movie, self) }
+      end
+    end
+    
+    # query_hash holds optional parameters.
+    # E.g. {
+    #  'genres' => 28,
+    #  'per_page' => 10,
+    #  'page' => 1,    
+    # }
+    # Full list at http://api.themoviedb.org/2.1/methods/Movie.browse
+    def browse(query_hash)
+      query_string = ""
+      query_hash.each do |key, value|
+        query_string += key + "=" + value.to_s + "&"
+      end
+      data = self.class.get(method_url('Movie.browse', query_string)).parsed_response
       if data.class != Array || data.first == "Nothing found."
         []
       else
@@ -57,11 +78,21 @@ module TMDBParty
     
     private
       def default_path_items
-        [@lang, 'json', @api_key]
+        # [@lang, 'json', @api_key]
+        [@lang, 'json']
+      end
+      
+      def api_key
+        @api_key
       end
       
       def method_url(method, value)
-        '/' + ([method] + default_path_items + [URI.escape(value.to_s)]).join('/')
+        if method == 'Movie.browse'
+          # Use '?' after api_key rather than '/' (causes 401 HTTP unauthorized for Movie.browse)
+          '/' + ([method] + default_path_items).join('/') + '/' + api_key.to_s + '?' + ([URI.escape(value.to_s)]).join('/')
+        else
+          '/' + ([method] + default_path_items + [api_key] + [URI.escape(value.to_s)]).join('/')
+        end
       end
   end
 end
