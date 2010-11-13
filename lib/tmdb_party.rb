@@ -32,13 +32,13 @@ module TMDBParty
     # E.g. {
     #  'genres' => 28,
     #  'per_page' => 10,
-    #  'page' => 1,    
+    #  'page' => 1,
     # }
     # Full list at http://api.themoviedb.org/2.1/methods/Movie.browse
     def browse(query_hash)
       query_string = ""
       query_hash.each do |key, value|
-        query_string += key + "=" + value.to_s + "&"
+        query_string += key.to_s + "=" + value.to_s + "&"
       end
       data = self.class.get(method_url('Movie.browse', query_string)).parsed_response
       if data.class != Array || data.first == "Nothing found."
